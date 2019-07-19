@@ -1,6 +1,7 @@
 ﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
-// 透明的暂时复习到这，如果需要对Blend再继续深入理解，可以继续看第八章
+// 此例子，处理交叉模型的透明问题，模型是透明的，但是内部不是正常半透明
+
 Shader "Unity Shaders Book/Chapter 8/Alpha Blending With ZWrite" {
 	Properties {
 		_Color ("Color Tint", Color) = (1, 1, 1, 1)

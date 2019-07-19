@@ -1,6 +1,7 @@
 ﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
-// 双面透明效果
+// 此例子，双面透明效果
+
 Shader "Unity Shaders Book/Chapter 8/Alpha Blend With Both Side" {
 	Properties {
 		_Color ("Color Tint", Color) = (1, 1, 1, 1)
