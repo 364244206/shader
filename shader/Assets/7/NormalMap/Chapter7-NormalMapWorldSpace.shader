@@ -58,7 +58,7 @@ Shader "Unity Shaders Book/Chapter 7/Normal Map In World Space" {
 				
 				// 切线空间 到 世界空的 变换矩阵
 				// 为了充分利用插值寄存器的存储空间，把顶点位置放到w分量存储
-				// 1.世界空间中的三个单位坐标轴TBN，按照列摆放的变换矩阵M，可以从切线空间 变换到 世界空间
+				// 世界空间中的三个单位坐标轴TBN，按照列摆放的变换矩阵M，可以从切线空间 变换到 世界空间
 				// Tx,Bx,Nx   Px   Tx*Px + Bx*Py + Nx*Pz
 				// Ty,By,Ny * Py = Ty*Px + By*Py + Ny*Pz
 				// Tz,Bz,Nz   Pz   Tz*Px + Bz*Py + Nz*Pz
