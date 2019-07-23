@@ -15,18 +15,18 @@
 			#include "UnityCG.cginc"
 
 			sampler2D _MainTex;
-			float4 _MainTex_ST;
+			half4 _MainTex_ST;
 
 			struct appdata
 			{
-				float4 vertex :		POSITION;
-				float2 texcoord :	TEXCOORD0;
+				half4 vertex :		POSITION;
+				half2 texcoord :	TEXCOORD0;
 			};
 
 			struct v2f {
-				float4 pos:		SV_POSITION;
-				float2 uv:		TEXCOORD0;
-				float4 proj :	TEXCOORD1;
+				half4 pos:		SV_POSITION;
+				half2 uv:		TEXCOORD0;
+				half4 proj :	TEXCOORD1;
 			};
 
 			float4x4 _WorldToProjectionMatrix; //【世界空间】变换【摄像机投影空间】矩阵
@@ -38,7 +38,7 @@
 				o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
 				o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
 
-				float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+				half4 worldPos = mul(unity_ObjectToWorld, v.vertex);
 				o.proj = mul(_WorldToProjectionMatrix, worldPos);
 				return o;
 			}
@@ -54,9 +54,9 @@
 				// 通过当前像素坐标位置，获取深度图颜色
 				fixed4 depthCol = tex2D(_DepthTexture, v.proj.xy);
 				// 通过深度图颜色，获取深度值
-				float shadowDepth = DecodeFloatRGBA(depthCol);
+				half shadowDepth = DecodeFloatRGBA(depthCol);
 				// 通过【当前片元的深度值】与【当前片元坐标对应深度图的深度值】进行比较
-				float shadowScale = 1;
+				half shadowScale = 1;
 				if (v.proj.z > shadowDepth)
 				{
 					shadowScale = 0.4f;
