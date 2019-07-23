@@ -43,10 +43,11 @@
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-				// 归一化设备坐标NDC时，手动操作齐次除法，可以得到深度值
+				// 顶点到片元有一个差值的过程，投影空间中不是线性的，除以w后深度值会不准确
+				// 所以在片元中除以w时的深度值才是正确的
 				float depth = i.depth.x / i.depth.y;
 				// depth时的点，值域已经是【0,1】了，因为负数的点在已经被裁剪掉了
-				// 将一个Float值存储在float4值当中，在frag函数中这个float4被当做颜色最终输出
+				// float是4个字节，刚好对应RGBA的4个分量，把一个浮点数编码到RGBA四个通道上
 				// 编码输入，解码输出值域都是【0,1】，提高深度值的精度
 				fixed4 col = EncodeFloatRGBA(depth);
 				return col;

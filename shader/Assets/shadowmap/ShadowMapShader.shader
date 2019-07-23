@@ -37,7 +37,7 @@
 				v2f o;
 				o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
 				o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
-
+				// 将顶点从【模型空间】变换到【投影空间】
 				half4 worldPos = mul(unity_ObjectToWorld, v.vertex);
 				o.proj = mul(_WorldToProjectionMatrix, worldPos);
 				return o;
