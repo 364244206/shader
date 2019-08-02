@@ -1,4 +1,11 @@
 ﻿Shader "Unity Shaders Book/Chapter 12/Gaussian Blur" {
+
+	//       2
+	//       1
+	// -2 -1 0 1 2   
+	//      -1
+	//      -2
+	// 每个点的邻接点乘以高斯核 0.4 + 0.245 * 2 + 0.055 * 2
 	Properties {
 		_MainTex ("Base (RGB)", 2D) = "white" {}
 		_BlurSize ("Blur Size", Float) = 1.0
