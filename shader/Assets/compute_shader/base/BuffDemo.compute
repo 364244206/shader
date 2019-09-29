@@ -1,0 +1,25 @@
+﻿#pragma kernel CSMain
+struct PBuffer
+{
+	float life;
+	float3 pos;
+	float3 scale;
+	float3 eulerAngle;
+};
+
+RWStructuredBuffer<PBuffer> buffer;
+float deltaTime;
+
+// 分配组id，好比第一次单元格划分
+// shader.Dispatch(kid, 2, 2, 1);
+// 每个组的线程数，好比第一次单元格划分
+[numthreads(2, 2, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID) // id每个组类的线程id
+{
+	// 最终索引 = 组id * 线程数量 + 组类最小格的线程id
+	int index = id.x + id.y * 2 * 2;
+	buffer[index].life -= deltaTime;
+	buffer[index].pos = buffer[index].pos + float3(0, deltaTime, 0);
+	buffer[index].scale = buffer[index].scale;
+	buffer[index].eulerAngle = buffer[index].eulerAngle + float3(0, 20 * deltaTime, 0);
+}

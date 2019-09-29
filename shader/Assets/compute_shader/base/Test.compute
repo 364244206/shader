@@ -1,0 +1,51 @@
+﻿#pragma kernel CSMain
+
+// ( CPU -> GPU )
+Texture2D inputTexture;
+
+// ( GPU -> CPU )
+RWTexture2D <float4> outputTexture;
+
+// 分配组id，好比第一次单元格划分 shader.Dispatch(kid, 32, 32, 1);
+// 每个组的线程数， 最终32*16=512为图片的尺寸
+// 此时的id.xy为图片的每个像素点
+[numthreads(16, 16, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+	// 转换为黑白
+	float R = inputTexture[id.xy].r;
+	float G = inputTexture[id.xy].g;
+	float B = inputTexture[id.xy].b;
+	float A = 1;
+	float Y = R * 0.299 + G * 0.587 + B * 0.114; // RGB 轉 灰階
+	outputTexture[id.xy] = float4(Y, Y, Y, A); // 丟回 CPU
+
+	// 原色返回
+	outputTexture[id.xy] = inputTexture[id.xy]; // 丟回 CPU
+
+	// 画圆
+	float2 center = float2(32 * 16 / 2, 32 * 16 / 2);
+	float distance = length(id.xy - center);
+	if (distance < 128)
+	{
+		outputTexture[id.xy] = outputTexture[id.xy] + float4(0.5f, 0, 0, 0.5f);
+	}
+
+	// 画间隔点
+	if (id.x % 8 == 0 && id.y % 8 == 0)
+	{
+		float2 points[4];
+		points[0] = float2(id.x + 8, id.y);
+		points[1] = float2(id.x, id.y + 8);
+		points[2] = float2(id.x - 8, id.y);
+		points[3] = float2(id.x, id.y - 8);
+
+		for (int i = 1; i < 4; ++i)
+		{
+			outputTexture[points[i]] = float4(1, 0, 0, 0.5f);
+		}
+	}
+
+
+
+}

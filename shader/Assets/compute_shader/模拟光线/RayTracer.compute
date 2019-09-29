@@ -1,0 +1,195 @@
+﻿#pragma kernel CSMain
+
+float iGlobalTime = 0;
+float4 iResolution = float4(256, 256, 0, 0);
+RWTexture2D<float4> Result;
+
+// 声明片段着色器
+void mainImage(out float4 fragColor, in float2 fragCoord);
+
+
+
+struct Ray
+{
+	float3 origin;
+	float3 direction;
+};
+
+struct Light
+{
+	float3 color;
+	float3 direction;
+};
+
+struct Material
+{
+	float3 color;     // 颜色
+	float diffuse;    // 漫反射值
+	float specular;   // 高光值
+};
+
+// 交叉位置的信息
+struct Intersect
+{
+	float len;      // 相交的长度
+	float3 normal;
+	Material material;
+};
+
+struct Sphere
+{
+	float radius;
+	float3 position;
+	Material material;
+};
+
+struct Plane
+{
+	float3 normal;
+	Material material;
+};
+
+// Single.Epsilon 字段表示大于零的最小正Single值。此字段为常数。
+//在这一点上，我定义了一些全局变量。一个更高级的程序可能会将这些值作为制服传递，但现在，这更容易修补。
+//由于浮点精度错误，当光线与曲面上的几何体相交时，交点可能就在曲面的正下方。
+//随后的反射光线将从表面的*内*壁反弹。这就是所谓的自我交集。创建新光线时，我会在稍微偏移的原点对其进行初始化，以帮助缓解此问题。
+static const float epsilon = 1e-3;
+
+// 迭代反射光的次数
+static const int iterations = 16;
+
+// 曝光值， 伽马值，强度，漫反射颜色
+static const float exposure = 1e-2;
+static const float gamma = 2.2;
+static const float intensity = 100.0;
+static const float3 ambient = float3(0.6, 0.8, 1.0) * intensity / gamma;
+
+// 静态光信息
+static const Light light = { float3(1.0, 1.0, 1.0) * intensity, normalize(float3(-1.0,  0.75, 1.0)) };
+
+// 错过的交叉信息
+static const Intersect miss = { 0.0, float3(0.0, 0.0, 0.0), { float3(0.0, 0.0, 0.0), 0.0, 0.0 } };
+
+
+// m=p-c; b=dot(m,d); c=dot(m,m)-r*r; 
+// 判别式 d=b*b-c,
+// 如果d<0则无实根
+// d=0则一个根，
+// d>0则2个实根，取较近的t=-b-sqrt(b*b-c)，t为射线到圆的长度
+Intersect intersect(Ray r, Sphere s)
+{
+	float3 m = r.origin - s.position;    // 圆到射线起点向量
+	float b = dot(m, r.direction);       // b大于0，说明射线方向背向圆心
+	float c = dot(m, m) - s.radius * s.radius;
+	if (c > 0 && b > 0)				// 如果射线起点在圆外，并且方向背向圆心，则不相交
+		return miss;
+
+	float discr = b * b - c;  // 判别式小于0
+	if (discr < 0)
+		return miss;
+
+	float t = -b - sqrt(discr);  // 射线长度
+	if (t < 0)
+		t = 0;
+	Intersect result = { t, (r.origin - s.position + t * r.direction) / s.radius, s.material };
+	return result;
+}
+
+Intersect intersect(Ray ray, Plane plane)
+{
+	float len = -dot(ray.origin, plane.normal) / dot(ray.direction, plane.normal);
+	if (len < 0.0)
+		return miss;
+	Intersect result = {len, plane.normal,plane.material};
+	return result;
+}
+
+// 射线（摄像机）和圆，地面的交点信息
+Intersect trace(Ray ray)
+{
+	const int num_spheres = 3;
+	Sphere spheres[num_spheres] = {
+		{ 2.0, float3(-4.0, 3.0 + sin(iGlobalTime), 0), { float3(1.0, 0.0, 0.2), 1.0, 0.001 } },
+		{ 3.0, float3(4.0 + cos(iGlobalTime), 3.0, 0), { float3(0.0, 0.2, 1.0), 1.0, 0.0 } },
+		{ 1.0, float3(0, 1.0, 2.0), { float3(1.0, 1.0, 1.0), 0.5, 0.25 } }
+	};
+	Intersect intersection = miss;
+	Plane floor = { float3(0, 1, 0),{ float3(1.0, 1.0, 1.0), 1.0, 0.0 } };
+	Intersect plane = intersect(ray, floor);
+	if (plane.material.diffuse > 0.0 || plane.material.specular > 0.0)
+	{
+		intersection = plane;
+	}
+	for (int i = 0; i < num_spheres; i++)
+	{
+		Intersect sphere = intersect(ray, spheres[i]);
+		if (sphere.material.diffuse > 0.0 || sphere.material.specular > 0.0)
+			intersection = sphere;
+	}
+	return intersection;
+}
+
+float3 radiance(Ray ray)
+{
+	float3 color = float3(0, 0, 0), fresnel = float3(0, 0, 0);
+	float3 mask = float3(1.0, 1.0, 1.0);
+	for (int i = 0; i <= iterations; i++)
+	{
+		Intersect hit = trace(ray);
+		// 和物体有交点
+		if (hit.material.diffuse > 0.0 || hit.material.specular > 0.0)
+		{
+			// 菲利尔公式 = 反射系数+(1-反射系数)*pow(1-v·n,5);
+			float3 r0 = hit.material.color.rgb * hit.material.specular;
+			float hv = clamp(dot(hit.normal, -ray.direction), 0.0, 1.0);
+			fresnel = r0 + (1.0 - r0) * pow(1.0 - hv, 5.0);
+			mask *= fresnel;
+
+			// 在物体表面构建射线，起点离表面有epsilon的距离，防止出现黑点问题，方向为灯光方向
+			Ray shadow = { ray.origin + hit.len * ray.direction + epsilon * light.direction, light.direction };
+			Intersect shadowedBy = trace(shadow);
+			// 射线刚好和表面相交，长度为0；未相交的位置就是背后或者阴影
+			if (shadowedBy.len == 0.0) {
+				color += clamp(dot(hit.normal, light.direction), 0.0, 1.0) * light.color
+					* hit.material.color.rgb * hit.material.diffuse
+					* (1.0 - fresnel) * mask / fresnel;
+			}
+
+			// 通过摄像机方向和法线方向求反射方向
+			float3 reflection = reflect(ray.direction, hit.normal);
+			// 在物体的表面，通过反射向量，构建新的射线
+			Ray reflectionRay = { ray.origin + hit.len * ray.direction + epsilon * reflection, reflection };
+			ray = reflectionRay;
+		}
+		else
+		{
+			float3 spotlight = float3(1e6, 1e6, 1e6) * pow(abs(dot(ray.direction, light.direction)), 250.0);
+			color += mask * (ambient + spotlight); break;
+		}
+
+	}
+	return color;
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+	float4 fragColor;
+	float2 fragCoord = float2(id.x, id.y);
+	mainImage(fragColor, fragCoord);
+	Result[id.xy] = fragColor;
+}
+
+void mainImage(out float4 fragColor, in float2 fragCoord) {
+	float2 uv = fragCoord.xy / iResolution.xy - float2(0.5, 0.5);
+	uv.x *= iResolution.x / iResolution.y;
+
+	// For each fragment, create a ray at a fixed point of origin directed at
+	// the coordinates of each fragment. The last thing before writing the color
+	// to the fragment is to post-process the pixel values using tone-mapping.
+	// In this case, I adjust for exposure and perform linear gamma correction.
+
+	Ray ray = { float3(0.0, 3.0, 22.0), normalize(float3(uv.x, uv.y, -1)) };
+	// 系统渲染内置了伽马校正，这里是模拟光照，颜色需要经过伽马校正，幂为0.45的pow()函数处理
+	fragColor = float4(pow(abs(radiance(ray) * 0.01), float3(1.0 / gamma, 1.0 / gamma, 1.0 / gamma)), 1.0);
+}
