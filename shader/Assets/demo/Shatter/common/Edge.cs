@@ -246,42 +246,42 @@ namespace Roma
             }
         }
 
-        public void Split(Vector3 localPointOnPlane, Vector3 localPlaneNormal,
-                    bool fillCut, UvMapper uvMapper,
-                    out Hull a, out Hull b)
-        {
-            lock (m_Key)
-            {
-                if(localPlaneNormal == Vector3.zero)
-                {
-                    localPlaneNormal = Vector3.up;
-                }
+        //public void Split(Vector3 localPointOnPlane, Vector3 localPlaneNormal,
+        //            bool fillCut, UvMapper uvMapper,
+        //            out Hull a, out Hull b)
+        //{
+        //    lock (m_Key)
+        //    {
+        //        if(localPlaneNormal == Vector3.zero)
+        //        {
+        //            localPlaneNormal = Vector3.up;
+        //        }
 
-                a = new Hull(this);
-                b = new Hull(this);
+        //        a = new Hull(this);
+        //        b = new Hull(this);
 
-                SetIndex();
+        //        SetIndex();
 
-                // 存储当前点列表中，在a或在b
-                bool[] pointAbovePlane;
-                AssignPoints(a, b, localPointOnPlane, localPlaneNormal, out pointAbovePlane);
+        //        // 存储当前点列表中，在a或在b
+        //        bool[] pointAbovePlane;
+        //        AssignPoints(a, b, localPointOnPlane, localPlaneNormal, out pointAbovePlane);
 
-                // 存储当前顶点列表中，在a或在b的顶点索引
-                int[] oldToNewVertex;
-                AssignVertices(a, b, pointAbovePlane, out oldToNewVertex);
+        //        // 存储当前顶点列表中，在a或在b的顶点索引
+        //        int[] oldToNewVertex;
+        //        AssignVertices(a, b, pointAbovePlane, out oldToNewVertex);
 
-                // 当前线，是否和分割面相交
-                bool[] edgeIntersectsPlane;   // 记录与分割面相交的线段索引
-                EdgeHit[] edgeHits;           // 记录与分割面相交的线段相交信息
-                AssignEdges(a, b, pointAbovePlane, localPointOnPlane, localPlaneNormal, out edgeIntersectsPlane, out edgeHits);
+        //        // 当前线，是否和分割面相交
+        //        bool[] edgeIntersectsPlane;   // 记录与分割面相交的线段索引
+        //        EdgeHit[] edgeHits;           // 记录与分割面相交的线段相交信息
+        //        AssignEdges(a, b, pointAbovePlane, localPointOnPlane, localPlaneNormal, out edgeIntersectsPlane, out edgeHits);
 
-                List<Edge> cutEdgesA, cutEdgesB;
+        //        List<Edge> cutEdgesA, cutEdgesB;
 
-                AssignTriangles(a, b, pointAbovePlane, edgeIntersectsPlane, edgeHits, oldToNewVertex, out cutEdgesA, out cutEdgesB);
+        //        AssignTriangles(a, b, pointAbovePlane, edgeIntersectsPlane, edgeHits, oldToNewVertex, out cutEdgesA, out cutEdgesB);
 
-                Clear();
-            }
-        }
+        //        Clear();
+        //    }
+        //}
 
         /// <summary>
         /// 设置点，线的索引

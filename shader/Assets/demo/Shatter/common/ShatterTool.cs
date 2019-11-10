@@ -8,7 +8,7 @@ namespace Roma
     {
 
         public Hull m_Hull;
-        private UvMapper uvMapper;
+        //private UvMapper uvMapper;
 
         void Start()
         {
@@ -64,18 +64,18 @@ namespace Roma
                 {
                     Hull preHull = newHulls[0];
                     Hull a, b;
-                    preHull.Split(item.normal * -item.distance, item.normal, false, uvMapper, out a, out b);
+                    //preHull.Split(item.normal * -item.distance, item.normal, false, uvMapper, out a, out b);
 
-                    newHulls.Remove(preHull);
+                    //newHulls.Remove(preHull);
 
-                    if(!a.IsEmpty)
-                    {
-                        newHulls.Add(a);
-                    }
-                    if(!b.IsEmpty)
-                    {
-                        newHulls.Add(b);
-                    }
+                    //if(!a.IsEmpty)
+                    //{
+                    //    newHulls.Add(a);
+                    //}
+                    //if(!b.IsEmpty)
+                    //{
+                    //    newHulls.Add(b);
+                    //}
                 }
                 
             }
