@@ -49,6 +49,8 @@ public class TerrainGenerator : MonoBehaviour
     public Material[] Materials;
     public bool InstantiateMaterials;
 
+
+    public MeshCollider m_Ms;
     void Start()
     {
         if (GenerateOnStart)
@@ -115,7 +117,7 @@ public class TerrainGenerator : MonoBehaviour
         // 渲染设置
         chunkMeshRenderer.shadowCastingMode = setting.RenderSettings.shadowCastingMode;
         chunkMeshRenderer.receiveShadows = setting.RenderSettings.ReceiveShadows;
-        chunkMeshRenderer.allowOcclusionWhenDynamic = setting.RenderSettings.DynamicOccluded;
+        //chunkMeshRenderer.allowOcclusionWhenDynamic = setting.RenderSettings.DynamicOccluded;
 
         Mesh mesh = MeshUtils.GeneratePlane(Vector3.zero,
             Vector3.right * chunkSize.x,
@@ -129,6 +131,10 @@ public class TerrainGenerator : MonoBehaviour
         mesh.name = chunkObject.name;
         chunkMeshFilter.mesh = mesh;
         chunkMeshRenderer.materials = Materials;
+
+
+        m_Ms.sharedMesh = mesh;
+
         return chunkObject;
 
     }
